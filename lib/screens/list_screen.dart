@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobxflutter/stores/listItemStore.dart';
+import 'package:mobxflutter/stores/listScreenStore.dart';
+import 'package:mobxflutter/stores/loginStore.dart';
 import 'package:mobxflutter/widgets/custom_icon_button.dart';
 import 'package:mobxflutter/widgets/custom_text_field.dart';
+import 'package:provider/provider.dart';
 
 import 'login_screen.dart';
 
@@ -11,6 +16,10 @@ class ListScreen extends StatefulWidget {
 }
 
 class _ListScreenState extends State<ListScreen> {
+
+  ListScreenStore listStore = ListScreenStore();
+
+  TextEditingController textController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +47,7 @@ class _ListScreenState extends State<ListScreen> {
                       icon: Icon(Icons.exit_to_app),
                       color: Colors.white,
                       onPressed: (){
+                        Provider.of<LoginStore>(context, listen: false).logout();
                         Navigator.of(context).pushReplacement(
                           MaterialPageRoute(builder: (context)=>LoginScreen())
                         );
@@ -56,37 +66,47 @@ class _ListScreenState extends State<ListScreen> {
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: <Widget>[
-                        CustomTextField(
-                          hint: 'Tarefa',
-                          onChanged: (todo){
-
-                          },
-                          suffix: CustomIconButton(
-                            radius: 32,
-                            iconData: Icons.add,
-                            onTap: (){
-
-                            },
-                          ),
-                        ),
+                        Observer(builder: (_) {
+                          return CustomTextField(
+                            hint: 'Tarefa',
+                            controller: textController,
+                            onChanged: listStore.setSearch,
+                            suffix: listStore.isFormValid ? CustomIconButton(
+                              radius: 32,
+                              iconData: Icons.add,
+                              onTap: (){
+                                listStore.addLista();
+                                textController.clear();
+                              },
+                            ) : null,
+                          );
+                        }),
                         const SizedBox(height: 8,),
                         Expanded(
-                          child: ListView.separated(
-                            itemCount: 10,
-                            itemBuilder: (_, index){
-                              return ListTile(
-                                title: Text(
-                                  'Item $index',
-                                ),
-                                onTap: (){
+                          child: Observer(builder: (_){
+                            return ListView.separated(
+                              itemCount: listStore.list.length,
+                              itemBuilder: (_, index){
+                                ListItemStore item = listStore.list[index];
 
-                                },
-                              );
-                            },
-                            separatorBuilder: (_, __){
-                              return Divider();
-                            },
-                          ),
+                                return Observer(builder: (_){
+                                  return ListTile(
+                                    title: Text(
+                                      item.texto,
+                                      style: TextStyle(
+                                        decoration: item.done ? TextDecoration.lineThrough : null,
+                                        color: item.done ? Colors.grey : Colors.black
+                                      ),
+                                    ),
+                                    onTap: item.toggleDone,
+                                  );
+                                });
+                              },
+                              separatorBuilder: (_, __){
+                                return Divider();
+                              },
+                            );
+                          },),
                         ),
                       ],
                     ),

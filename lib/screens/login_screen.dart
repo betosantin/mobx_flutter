@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:mobx/mobx.dart';
 import 'package:mobxflutter/stores/loginStore.dart';
 import 'package:mobxflutter/widgets/custom_icon_button.dart';
 import 'package:mobxflutter/widgets/custom_text_field.dart';
+import 'package:provider/provider.dart';
 
 import 'list_screen.dart';
 
@@ -14,7 +16,24 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
 
-  LoginStore loginStore = LoginStore();
+  LoginStore loginStore;
+
+  ReactionDisposer disposer;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    //Busca a loginStore do contexto no provider
+    loginStore = Provider.of<LoginStore>(context);
+
+    disposer = reaction((_) => loginStore.loggedIn, (loggedIn) {
+      if (loggedIn) {
+        Navigator.of(context)
+            .pushReplacement(MaterialPageRoute(builder: (_) => ListScreen()));
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,13 +52,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    CustomTextField(
-                      hint: 'E-mail',
-                      prefix: Icon(Icons.account_circle),
-                      textInputType: TextInputType.emailAddress,
-                      onChanged: loginStore.setEmail,
-                      enabled: true,
-                    ),
+                    Observer(builder: (_) {
+                      return CustomTextField(
+                        hint: 'E-mail',
+                        prefix: Icon(Icons.account_circle),
+                        textInputType: TextInputType.emailAddress,
+                        onChanged: loginStore.setEmail,
+                        enabled: !loginStore.loading,
+                      );
+                    }),
                     const SizedBox(height: 16,),
                     Observer(builder: (_){
                       return CustomTextField(
@@ -47,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         prefix: Icon(Icons.lock),
                         obscure: !loginStore.senhaVisivel,
                         onChanged: loginStore.setSenha,
-                        enabled: true,
+                        enabled: !loginStore.loading,
                         suffix: CustomIconButton(
                           radius: 32,
                           iconData: loginStore.senhaVisivel ? Icons.visibility_off :Icons.visibility,
@@ -65,15 +86,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(32),
                             ),
-                            child: Text('Login'),
+                            child: loginStore.loading ? CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ) : Text('Login'),
                             color: Theme.of(context).primaryColor,
                             disabledColor: Theme.of(context).primaryColor.withAlpha(100),
                             textColor: Colors.white,
-                            onPressed: loginStore.isFormValid ? (){
-                              Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(builder: (context)=>ListScreen())
-                              );
-                            }  : null,
+                            onPressed: loginStore.loginPressed
                           ),
                         );
                       }
@@ -85,5 +104,11 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    disposer();
+    super.dispose();
   }
 }
