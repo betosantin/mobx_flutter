@@ -29,6 +29,13 @@ mixin _$LoginStore on _LoginSt, Store {
   bool get isFormValid => (_$isFormValidComputed ??=
           Computed<bool>(() => super.isFormValid, name: '_LoginSt.isFormValid'))
       .value;
+  Computed<Function> _$loginPressedComputed;
+
+  @override
+  Function get loginPressed =>
+      (_$loginPressedComputed ??= Computed<Function>(() => super.loginPressed,
+              name: '_LoginSt.loginPressed'))
+          .value;
 
   final _$emailAtom = Atom(name: '_LoginSt.email');
 
@@ -75,6 +82,43 @@ mixin _$LoginStore on _LoginSt, Store {
     });
   }
 
+  final _$loadingAtom = Atom(name: '_LoginSt.loading');
+
+  @override
+  bool get loading {
+    _$loadingAtom.reportRead();
+    return super.loading;
+  }
+
+  @override
+  set loading(bool value) {
+    _$loadingAtom.reportWrite(value, super.loading, () {
+      super.loading = value;
+    });
+  }
+
+  final _$loggedInAtom = Atom(name: '_LoginSt.loggedIn');
+
+  @override
+  bool get loggedIn {
+    _$loggedInAtom.reportRead();
+    return super.loggedIn;
+  }
+
+  @override
+  set loggedIn(bool value) {
+    _$loggedInAtom.reportWrite(value, super.loggedIn, () {
+      super.loggedIn = value;
+    });
+  }
+
+  final _$loginAsyncAction = AsyncAction('_LoginSt.login');
+
+  @override
+  Future<void> login() {
+    return _$loginAsyncAction.run(() => super.login());
+  }
+
   final _$_LoginStActionController = ActionController(name: '_LoginSt');
 
   @override
@@ -116,9 +160,12 @@ mixin _$LoginStore on _LoginSt, Store {
 email: ${email},
 senha: ${senha},
 senhaVisivel: ${senhaVisivel},
+loading: ${loading},
+loggedIn: ${loggedIn},
 isEmailValid: ${isEmailValid},
 isSenhaValid: ${isSenhaValid},
-isFormValid: ${isFormValid}
+isFormValid: ${isFormValid},
+loginPressed: ${loginPressed}
     ''';
   }
 }

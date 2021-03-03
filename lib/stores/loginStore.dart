@@ -8,9 +8,9 @@ class LoginStore = _LoginSt with _$LoginStore;
 abstract class _LoginSt with Store {
 
   _LoginSt(){
-    autorun((_){
-      print(isFormValid);
-    });
+//    autorun((_){
+//      print(isFormValid);
+//    });
   }
 
   @observable
@@ -20,7 +20,7 @@ abstract class _LoginSt with Store {
   void setEmail(String value) => email = value;
 
   @observable
-  String senha;
+  String senha = "";
 
   @action
   void setSenha(String value) => senha = value;
@@ -41,4 +41,33 @@ abstract class _LoginSt with Store {
 
   @action
   void toggleSenhaVisible() => senhaVisivel = !senhaVisivel;
+
+  @observable
+  bool loading = false;
+
+  @observable
+  bool loggedIn = false;
+
+  @action
+  Future<void> login() async {
+    loading = true;
+
+    //processar
+    await Future.delayed(Duration(seconds: 2), (){});
+
+
+    loading = false;
+    loggedIn = true;
+
+    email = "";
+    senha = "";
+  }
+
+  @computed
+  Function get loginPressed => (isEmailValid && isSenhaValid && !loading) ? login : null;
+
+  @action
+  void logout(){
+    loggedIn = false;
+  }
 }
